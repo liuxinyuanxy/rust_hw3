@@ -5,6 +5,12 @@ struct Inner<T> {
     count: usize,
 }
 
+impl<T> Drop for Inner<T> {
+    fn drop(&mut self) {
+        println!("Inner dropped");
+    }
+}
+
 pub struct MyRc<'a, T> {
     ptr: &'a RefCell<Inner<T>>,
 }
@@ -32,8 +38,12 @@ impl<'a, T> Drop for MyRc<'a, T> {
         let mut inner = self.ptr.borrow_mut();
         inner.count -= 1;
         if inner.count == 0 {
-            std::mem::drop(inner);
-            println!("dropped")
+            drop(inner);
+            unsafe {
+                drop(Box::from_raw(
+                    self.ptr as *const RefCell<Inner<T>> as *mut RefCell<Inner<T>>,
+                ));
+            }
         }
     }
 }
@@ -41,7 +51,7 @@ impl<'a, T> Drop for MyRc<'a, T> {
 impl<'a, T> std::ops::Deref for MyRc<'a, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        unsafe { &self.ptr.as_ptr().as_ref().unwrap().data }
+        unsafe { &(*self.ptr.as_ptr()).data }
     }
 }
 
