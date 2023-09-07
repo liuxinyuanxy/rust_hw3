@@ -1,3 +1,7 @@
+run `cargo test` to test myrc and mystack.
+
+The code of macro is in main.rs
+
 ### About MyRc
 
 写了一整天，记录一下想法
